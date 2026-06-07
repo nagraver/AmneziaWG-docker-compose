@@ -5,13 +5,30 @@ services:
   amnezia-wg-easy:
     env_file:
       - .env
-    image: ghcr.io/w0rng/amnezia-wg-easy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: amnezia-wg-easy:local
     container_name: amnezia-wg-easy
     volumes:
       - etc_wireguard:/etc/wireguard
+      - /lib/modules:/lib/modules:ro
     ports:
       - "${WG_PORT}:${WG_PORT}/udp"
-      - "${PORT}:${PORT}/tcp"
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.wg-easy-http.rule=Host(`${WG_HOST}`)
+      - traefik.http.routers.wg-easy-http.entrypoints=web
+      - traefik.http.routers.wg-easy-http.middlewares=wg-easy-https-redirect
+      - traefik.http.middlewares.wg-easy-https-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.wg-easy-https.rule=Host(`${WG_HOST}`)
+      - traefik.http.routers.wg-easy-https.entrypoints=websecure
+      - traefik.http.routers.wg-easy-https.tls=true
+      - traefik.http.routers.wg-easy-https.tls.certresolver=le
+      - traefik.http.services.wg-easy.loadbalancer.server.port=${PORT}
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -22,3 +39,7 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
     devices:
     - /dev/net/tun:/dev/net/tun
+
+networks:
+  proxy:
+    external: true

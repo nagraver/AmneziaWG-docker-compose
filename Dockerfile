@@ -3,7 +3,7 @@
 FROM docker.io/library/node:18-alpine AS build_node_modules
 
 # Update npm to latest
-RUN npm install -g npm@latest
+RUN npm install -g npm@10
 
 # Copy Web UI
 COPY src /app
@@ -38,8 +38,8 @@ RUN apk add --no-cache \
     nodejs \
     npm
 
-# Use iptables-legacy
-RUN update-alternatives --install /sbin/iptables iptables /sbin/iptables-legacy 10 --slave /sbin/iptables-restore iptables-restore /sbin/iptables-legacy-restore --slave /sbin/iptables-save iptables-save /sbin/iptables-legacy-save
+# Use iptables nft backend
+RUN update-alternatives --install /sbin/iptables iptables /sbin/iptables-nft 20 --slave /sbin/iptables-restore iptables-restore /sbin/iptables-nft-restore --slave /sbin/iptables-save iptables-save /sbin/iptables-nft-save
 
 # Set Environment
 ENV DEBUG=Server,WireGuard
